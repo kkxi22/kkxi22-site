@@ -3,53 +3,44 @@ export const frontmatter = {
   date: "2026-03-15",
   description: "拆解 bb-browser 如何把真实 Chrome 会话转成 Agent 可编排的本地浏览器执行面。",
   summary:
-    "聚焦原理、架构和实战教程：先讲清 bb-browser 为什么有效，再给出 OpenClaw、独立模式和 MCP 的可执行用法。",
+    "基于知识库两篇文档汇总：先讲原理与分层架构，再给出 OpenClaw/独立模式/MCP 的应用层实操路径。",
   category: "源码分析",
   tags: ["bb-browser", "Browser Agent", "Chrome Extension", "MCP", "Source Dive"],
   image: "/images/blog-bb-browser-v2.svg",
-  readingTime: "10 min",
+  readingTime: "12 min",
 };
 
 <h2 id="basic-info">基本信息</h2>
 
 - 项目: `epiral/bb-browser`
 - 分析日期: `2026-03-15`
-- 分析方式: 在线直接阅读 `main` 分支源码与 README
-- 本次实际阅读文件:
-  - `README.md`
-  - `packages/cli/src/index.ts`
-  - `packages/shared/src/protocol.ts`
-  - `packages/daemon/src/http-server.ts`
-  - `packages/daemon/src/request-manager.ts`
-  - `packages/daemon/src/sse-manager.ts`
-  - `packages/extension/src/background/index.ts`
-
-<Callout tone="success">
-  这次结论是基于源码阅读，不是只读 README。之前那句“源码正文未完整抓到”的表述不准确，已修正。
-</Callout>
+- 汇总来源（知识库）:
+  - `bb-browser_深度分析.md`
+  - `bb-browser_源码深度分析_2026-03-15.md`
+- 汇总目标: 把两篇“源码解构”合并为一篇“原理 + 架构 + 应用教程”版本，直接可用于项目接入与落地
 
 <h2 id="core-principles">核心原理</h2>
 
-先说结论：`bb-browser` 的价值不在“自动化点击”，而在“把你的真实浏览器会话变成 Agent 可调用接口”。
+一句话结论：`bb-browser` 不是再造一个浏览器自动化框架，而是把“用户真实 Chrome 会话”转成 Agent 可编排执行面。
 
-它成立的关键有四个：
+这套方案成立，依赖四个核心原则：
 
 1. **真实会话优先**
-   - 不重建登录态，不模拟新浏览器。
-   - 直接用你已经登录的 Chrome 会话、Cookie、页面上下文。
-2. **消息协议优先**
-   - `ActionType` + `Request/Response` 是核心抽象。
-   - CLI、daemon、extension 都围绕协议通信，降低耦合。
-3. **语义引用优先**
-   - 通过 snapshot/ref 把页面转成“先观察，再操作”。
-   - 避免一上来就写脆弱 selector。
+   - 复用已登录浏览器的 Cookie、Session、页面 JS 运行态
+   - 目标不是“模拟用户”，而是“代表用户当前会话执行”
+2. **协议驱动优先**
+   - 核心边界由 `ActionType / Request / Response` 统一定义
+   - CLI、daemon、extension、MCP 共用同一套动作语义
+3. **语义快照优先**
+   - 先 `snapshot` 建立 `ref`，再 `click/fill/press`
+   - 比 selector-first 更稳，抗 DOM 结构变化能力更高
 4. **站点适配器优先**
-   - 高频站点逻辑沉到 `site` adapter。
-   - 应用层能力可扩展，不把网站细节硬编码进核心引擎。
+   - 用 adapter 承载站点知识，主仓只负责控制平面和执行平面
+   - 能力扩展靠“新增适配器”，而不是不停改内核命令
 
 <h2 id="architecture">总体架构</h2>
 
-从源码看，主链路非常清晰：
+两篇文档在架构判断上是一致的，主链路如下：
 
 ```text
 AI Agent / CLI / MCP
@@ -72,28 +63,31 @@ AI Agent / CLI / MCP
    User's Real Chrome Session
 ```
 
-对应到代码职责：
+Monorepo 分层职责：
 
-- `packages/cli`: 参数解析、命令路由、MCP 入口 (`--mcp`)
-- `packages/daemon`: `POST /command`、`GET /sse`、`POST /result`、`GET /status`
-- `request-manager`: pending 请求和超时管理
-- `sse-manager`: 与扩展长连接 + heartbeat
-- `extension/background`: service worker、连接 daemon、处理命令
-- `shared/protocol`: 行为类型和请求响应结构
+- `packages/shared`: 协议、类型、常量（跨层合同）
+- `packages/cli`: 命令入口、参数解析、输出格式、site adapter 运行
+- `packages/daemon`: 本地 HTTP + SSE 中转，做请求关联和超时治理
+- `packages/extension`: MV3 扩展执行层，调用 CDP 真正操作标签页
+- `packages/mcp`: 把浏览器能力封装成 MCP tools 给 Agent 调用
 
-为什么这样拆：
+这类拆分的本质是“控制面/执行面解耦”：
 
-- daemon 专注“可靠转发和状态管理”
-- extension 专注“贴近浏览器执行”
-- CLI/MCP 专注“给人和 Agent 友好的调用入口”
+- daemon 解决可靠通信，不碰浏览器细节
+- extension 解决浏览器执行，不承载复杂交互入口
+- CLI/MCP 解决人机调用，不直接管浏览器生命周期细节
+
+<Callout tone="success">
+  这也是 bb-browser 和传统脚本自动化的分水岭：它把“浏览器控制”做成了一套可复用协议系统，而不是零散脚本集合。
+</Callout>
 
 <h2 id="quick-start">快速上手</h2>
 
-这里给三个常见接入模式。
+下面三种接法，覆盖大部分落地场景。
 
 <h3 id="mode-openclaw">模式 A：OpenClaw 直连（最省事）</h3>
 
-如果你已经在用 OpenClaw，这个模式最简单，不需要单独装扩展和 daemon：
+如果你已在用 OpenClaw，优先走这个模式：
 
 ```bash
 bb-browser site update
@@ -101,27 +95,27 @@ bb-browser site reddit/hot --openclaw
 bb-browser site xueqiu/hot-stock 5 --openclaw --jq '.items[] | {name, changePercent}'
 ```
 
-适合：已经把 OpenClaw 作为浏览器执行层的人。
+适合：已有 OpenClaw 网关和浏览器能力的人，接入成本最低。
 
 <h3 id="mode-standalone">模式 B：独立模式（Chrome Extension + daemon）</h3>
 
-1. 安装 CLI
+1. 安装 CLI：
 
 ```bash
 npm install -g bb-browser
 ```
 
-2. 安装扩展
+2. 安装扩展：
    - 从 Releases 下载扩展压缩包
    - 解压后在 `chrome://extensions/` 开启开发者模式并加载
 
-3. 启动 daemon（默认 `127.0.0.1:19824`）
+3. 启动 daemon（默认 `127.0.0.1:19824`）：
 
 ```bash
 bb-browser daemon
 ```
 
-4. 验证链路
+4. 验证链路：
 
 ```bash
 bb-browser status
@@ -129,7 +123,7 @@ bb-browser open https://example.com
 bb-browser snapshot -i
 ```
 
-如果 `status` 显示扩展未连接，先检查扩展是否已加载、是否允许在当前浏览器会话运行。
+若 `status` 显示扩展未连接，先检查扩展加载状态、权限和 daemon 地址。
 
 <h3 id="mode-mcp">模式 C：MCP 接入 Claude Code / Cursor</h3>
 
@@ -146,11 +140,11 @@ bb-browser snapshot -i
 }
 ```
 
-然后在 Agent 侧走“snapshot -> ref -> click/fill”流程，不要直接 selector-first。
+进入 Agent 执行时，优先走 `snapshot -> ref -> action` 闭环，不要直接 selector-first。
 
 <h2 id="usage-recipes">应用层教程</h2>
 
-这一节只讲可直接上手的任务模板。
+这部分是两篇文档共同强调的重点：应用层比底层更决定价值。
 
 <h3 id="recipe-research">教程 1：多平台研究（结构化输出）</h3>
 
@@ -161,7 +155,7 @@ bb-browser site github/search "rag framework" --json
 bb-browser site zhihu/search "RAG" --json
 ```
 
-要做自动化汇总，建议每条命令都加 `--json`，再用 `--jq` 直接抽字段，减少后处理工作。
+建议每条命令都输出 `--json`，再用 `--jq` 做最小字段抽取，便于汇总与二次处理。
 
 <h3 id="recipe-auth-fetch">教程 2：用登录态抓数据而不是自己补鉴权</h3>
 
@@ -170,7 +164,7 @@ bb-browser open https://example.com/dashboard
 bb-browser fetch https://example.com/api/me --json
 ```
 
-这套方式的核心优势是：不在脚本里手动拼 cookie/token，让页面会话自己完成身份上下文。
+重点不是“绕过鉴权”，而是“复用已存在的合法会话上下文”，减少自维护 token/cookie 的脆弱链路。
 
 <h3 id="recipe-debug">教程 3：命令失败时的定位顺序</h3>
 
@@ -182,9 +176,9 @@ bb-browser errors --json
 
 推荐排查顺序：
 
-1. 先看 `errors`（页面脚本是否报错）
-2. 再看 `network`（请求是否 401/403/429）
-3. 再看 `console`（业务逻辑告警）
+1. `errors`：前端运行是否直接异常
+2. `network`：接口是否 401/403/429 或返回体异常
+3. `console`：业务日志是否提示环境或参数问题
 
 <h3 id="recipe-browser-ops">教程 4：通用浏览器操作编排</h3>
 
@@ -200,22 +194,22 @@ bb-browser screenshot
 实践建议：
 
 - 每次页面变化后重新 `snapshot -i`
-- ref 失效时不要硬点，先重新观察
-- 尽量让 Agent 走“观察 -> 决策 -> 动作”闭环
+- ref 失效先重建快照，不要硬点旧引用
+- 让 Agent 明确分三步：观察、决策、动作
 
 <h2 id="adapter-workflow">如何把网站接入应用层</h2>
 
-`bb-browser` 的长期扩展能力在 `site adapter` 体系，不在核心命令数量。
+两篇文档都给出同一个结论：真正可规模化的是 adapter 体系，而不是堆命令。
 
 推荐工作流：
 
-1. `bb-browser guide` 先看官方适配流程
-2. 用 `network requests --with-body` 观察真实请求
-3. 优先做“能稳定返回结构化 JSON”的最小版本
-4. 通过 `site info` / `site list` 做命令面验证
-5. 再补分页、过滤和错误处理
+1. 先用 `bb-browser guide` 明确适配边界
+2. 通过 `network requests --with-body` 抓真实请求模型
+3. 先做最小可用 adapter（稳定 JSON 输出）
+4. 再补分页、过滤、重试和错误语义
+5. 最后做命令面体验（`site info/list`、字段命名、默认排序）
 
-按 README 的经验，可把站点适配分为三层：
+可按复杂度分层推进：
 
 - Tier 1: 直接 cookie/fetch
 - Tier 2: 需要 bearer/csrf
@@ -223,28 +217,33 @@ bb-browser screenshot
 
 <h2 id="limitations">边界与风险</h2>
 
-使用前要明确三件事：
+使用时要明确三类边界：
 
-1. **信任边界**
-   - 这是“代表你操作浏览器”的能力，不是隔离沙箱。
-   - 只给可信 Agent 和可信脚本使用。
-2. **扩展生命周期**
-   - MV3 service worker 天生会休眠。
-   - 项目已做 keepalive + 重连，但你仍要设计重试机制。
-3. **平台策略变化**
-   - 站点前端结构、风控策略会变。
-   - adapter 层需要持续维护，不是一劳永逸。
+1. **权限与信任边界**
+   - 这是用户会话级能力，不是沙箱能力
+   - 只应授予可信 Agent 与可信脚本
+2. **扩展生命周期边界**
+   - MV3 service worker 可能休眠、断连、状态回收
+   - 需要重连、重试和 ref 恢复策略
+3. **站点变化边界**
+   - DOM、接口、风控策略会持续变化
+   - adapter 维护是常态，不是一次性开发
 
 <h2 id="final-evaluation">最终评价</h2>
 
 <Callout tone="success">
-  <p>
-    <code>bb-browser</code> 最值得借鉴的不是“又一套自动化命令”，而是它把“真实浏览器会话”定义成
-    AI Agent 的一等执行环境。先把原理和边界吃透，再做应用层编排，你会更稳。
-  </p>
+  <p><code>bb-browser</code> 的工程价值在于：把真实浏览器会话系统化为 Agent 能力，而不是只做脚本自动化。</p>
+  <p>对实战最有帮助的路径是：先吃透“协议分层 + snapshot/ref 模型”，再把重心放在 adapter 和业务流程编排。</p>
 </Callout>
 
-<h2 id="references">参考源码与页面</h2>
+<h2 id="references">参考来源</h2>
+
+### 知识库文档
+
+- `~/Desktop/知识库/bb-browser_深度分析.md`
+- `~/Desktop/知识库/bb-browser_源码深度分析_2026-03-15.md`
+
+### 公开源码与页面
 
 - [README](https://raw.githubusercontent.com/epiral/bb-browser/main/README.md)
 - [CLI 入口](https://raw.githubusercontent.com/epiral/bb-browser/main/packages/cli/src/index.ts)

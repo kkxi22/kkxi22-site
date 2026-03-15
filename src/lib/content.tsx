@@ -50,11 +50,11 @@ export const blogPosts: ContentEntry[] = [
     href: "/blog/bb-browser-source-deep-dive/",
     title: "bb-browser 源码深度分析",
     description: "拆解 bb-browser 如何把真实 Chrome 会话转成 Agent 可编排的本地浏览器执行面。",
-    summary: "聚焦原理、架构和实战教程：OpenClaw、独立模式与 MCP 三种接法，以及应用层编排方法。",
+    summary: "汇总知识库两篇文档：从核心原理、分层架构到 OpenClaw/独立模式/MCP 的应用层实操路径。",
     date: "2026-03-15",
     category: "源码分析",
     image: "/images/blog-bb-browser-v2.svg",
-    readingTime: "10 min",
+    readingTime: "12 min",
     tags: ["bb-browser", "Browser Agent", "Chrome Extension", "MCP", "Source Dive"],
     toc: [
       { id: "basic-info", label: "基本信息" },
