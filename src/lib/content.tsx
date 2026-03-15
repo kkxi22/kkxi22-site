@@ -1,5 +1,6 @@
 import type { ComponentType } from "react";
 
+import BlogBbBrowserCompetitivePost from "@/content/blog/bb-browser-competitive-ecommerce-playbook.mdx";
 import BlogBbBrowserPost from "@/content/blog/bb-browser-source-deep-dive.mdx";
 import BlogWorkflowPost from "@/content/blog/human-loop-workflows.mdx";
 import BlogStackPost from "@/content/blog/nextjs-personal-site-stack.mdx";
@@ -45,6 +46,29 @@ export const topTabs = [
 ];
 
 export const blogPosts: ContentEntry[] = [
+  {
+    slug: "bb-browser-competitive-ecommerce-playbook",
+    href: "/blog/bb-browser-competitive-ecommerce-playbook/",
+    title: "bb-browser 竞品对比与电商落地手册",
+    description: "基于一份真实对话内容，整理 bb-browser 的定位、竞品边界，以及电商落地路径。",
+    summary:
+      "回答三个关键问题：和 Browser Use/Browserbase/Stagehand 差在哪、如何把网站命令化、为什么电商不能零开发全自动。",
+    date: "2026-03-15",
+    category: "应用架构",
+    image: "/images/blog-bb-browser-v2.svg",
+    readingTime: "9 min",
+    tags: ["bb-browser", "Browser Use", "Browserbase", "Stagehand", "E-commerce", "MCP"],
+    toc: [
+      { id: "positioning", label: "先定位置" },
+      { id: "competition", label: "竞品对比" },
+      { id: "browser-as-api", label: "网站命令化" },
+      { id: "ecommerce-reality", label: "电商现实边界" },
+      { id: "implementation", label: "三阶段落地" },
+      { id: "decision-guide", label: "选型原则" },
+      { id: "summary", label: "总结" },
+    ],
+    Component: BlogBbBrowserCompetitivePost,
+  },
   {
     slug: "bb-browser-source-deep-dive",
     href: "/blog/bb-browser-source-deep-dive/",

@@ -1,0 +1,134 @@
+export const frontmatter = {
+  title: "bb-browser 竞品对比与电商落地手册",
+  date: "2026-03-15",
+  description:
+    "基于一份真实对话内容，整理 bb-browser 的定位、竞品边界，以及在电商场景下的最小可行落地路径。",
+  summary:
+    "不是再讲原理，而是直接回答三个问题：和 Browser Use/Browserbase/Stagehand 差在哪、如何把网站命令化、为什么电商不能零开发全自动。",
+  category: "应用架构",
+  tags: ["bb-browser", "Browser Use", "Browserbase", "Stagehand", "E-commerce", "MCP"],
+  image: "/images/blog-bb-browser-v2.svg",
+  readingTime: "9 min",
+};
+
+<h2 id="positioning">先定位置：bb-browser 到底是什么</h2>
+
+`bb-browser` 最容易被误解成“另一个浏览器自动化工具”，但它真正的定位更接近：
+
+- 真实 Chrome 会话能力桥接层
+- Agent 可调用的 CLI / MCP 执行面
+- 网站命令化（adapter 化）的运行底座
+
+它最强的价值点不是“会点按钮”，而是复用用户已经登录的浏览器上下文，让 AI 以更低成本获得“可访问、可操作、可提取”的网页能力。
+
+<h2 id="competition">竞品对比：不要拿不同层的产品硬比</h2>
+
+如果从工程层级看，`bb-browser` 和常见方案并不在同一层。
+
+| 产品 | 核心定位 | 更强场景 |
+| --- | --- | --- |
+| bb-browser | 本地真实浏览器桥接层（CLI/MCP/API） | 个人效率流、本机登录态复用、研究与半自动操作 |
+| Browser Use | AI 浏览器 Agent 平台 | 云端任务、规模化执行、反检测能力 |
+| Browserbase | 浏览器基础设施（infra） | 企业托管、并发 session、稳定运行环境 |
+| Stagehand | AI + code 混合自动化框架 | 长流程工程化、可维护自动化 |
+| Playwright/Puppeteer | 低层自动化框架 | 定制化测试与脚本控制 |
+
+实操判断：
+
+- 你要“今天就让 AI 用我当前 Chrome 和登录态”，优先 `bb-browser`。
+- 你要“线上规模化和企业级稳定”，优先 Browser Use / Browserbase / Stagehand 组合。
+- 你要“低层可控脚本体系”，Playwright 仍然是基础盘。
+
+<h2 id="browser-as-api">怎么把网站做成结构化命令（Your browser is the API）</h2>
+
+关键不是“AI 会点网页”，而是把网站能力抽象成稳定命令：
+
+`输入参数 -> 浏览器内执行 -> 标准 JSON 输出`
+
+最推荐的命令化优先级：
+
+1. 官方 API（如果有）
+2. 页面真实请求（抓 network）
+3. 页面运行时状态（store / window state）
+4. DOM 提取（最后兜底）
+
+可落地的 adapter 命令示例：
+
+- `searchProducts(query)`
+- `getProductDetail(productId)`
+- `selectSku(productId, options)`
+- `addToCart(productId, skuId, qty)`
+- `prepareCheckout(cartId)`
+
+```bash
+bb-browser open https://example.com
+bb-browser snapshot -i
+bb-browser network requests --with-body --json
+bb-browser eval "return window.__INITIAL_STATE__"
+```
+
+<h2 id="ecommerce-reality">电商场景的现实：不能零开发全自动</h2>
+
+一个常见误区是：有了 `bb-browser`，电商站就能“不开发任何 agent 逻辑”直接让 AI 完整下单到支付。
+
+现实是：
+
+- 浏览器接入层可以少开发
+- 业务语义层和风控支付层不能不开发
+
+因为电商关键复杂度不在“能不能点页面”，而在：
+
+- SKU 规则与库存一致性
+- 优惠券/运费/发票组合逻辑
+- 订单幂等与失败补偿
+- 支付确认、风控、审计
+
+<Callout tone="warning">
+  <p>
+    更稳的产品边界是：AI 到“提交订单前”或“拉起支付前”，最终支付由用户强确认。
+  </p>
+</Callout>
+
+<h2 id="implementation">三阶段落地路径（最小可行到可交易）</h2>
+
+**阶段 1：浏览器直驱验证（最快）**
+
+- 用户手动登录
+- AI 完成搜索、详情、选规格、加购、填写
+- 到订单确认页为止
+
+优点：上线快。  
+缺点：对页面改版敏感，稳定性一般。
+
+**阶段 2：半结构化命令（推荐）**
+
+- 把高频动作收敛为 5-8 个 adapter 命令
+- 上层 AI 调命令而不是逐步瞎点 DOM
+
+优点：成功率和可维护性明显提升。
+
+**阶段 3：混合架构（长期）**
+
+- `bb-browser` 负责登录态、页面理解、兜底交互
+- 你自己的后端接口负责下单幂等、价格库存复核、支付准备、审计日志
+
+优点：可交易、可治理、可扩展。
+
+<h2 id="decision-guide">给前端 / Agent 团队的选型原则</h2>
+
+如果你的目标是“尽量少造轮子”，建议按这条线走：
+
+- 用 `bb-browser` 省掉浏览器控制与登录态接入开发
+- 用少量 adapter 承接高频业务动作
+- 把高风险动作收口到后端可审计接口
+
+这比“纯页面自动化”更稳，也比“一开始重做全套 Agent 平台”更快。
+
+<h2 id="summary">总结</h2>
+
+`bb-browser` 的强项是把“真实浏览器身份 + 页面能力”变成 Agent 可编排接口层。  
+它可以显著降低你接入 AI 的门槛，但不会替代电商交易本身的业务建模与安全治理。
+
+一句话结论：  
+**它适合做 AI 接入加速器，不适合当交易系统替代品。**
+
