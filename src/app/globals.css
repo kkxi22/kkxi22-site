@@ -13,10 +13,6 @@
   --accent-strong: #6f4122;
   --accent-soft: #f1e0cd;
   --accent-soft-strong: #7a4a29;
-  --sidebar-width: 18rem;
-  --toc-width: 15rem;
-  --topbar-height: 4rem;
-  --tabs-height: 3rem;
 }
 
 @theme inline {
@@ -73,12 +69,6 @@ a {
 
 ::selection {
   background: rgba(201, 120, 69, 0.22);
-}
-
-.content-grid {
-  display: grid;
-  grid-template-columns: var(--sidebar-width) minmax(0, 1fr) var(--toc-width);
-  gap: 2rem;
 }
 
 .article h1,
@@ -265,16 +255,4 @@ a {
   border: 0;
   border-top: 1px solid var(--border);
   margin: 2rem 0;
-}
-
-@media (max-width: 1100px) {
-  .content-grid {
-    grid-template-columns: minmax(0, 1fr) var(--toc-width);
-  }
-}
-
-@media (max-width: 900px) {
-  .content-grid {
-    grid-template-columns: minmax(0, 1fr);
-  }
 }

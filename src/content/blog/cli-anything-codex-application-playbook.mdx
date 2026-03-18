@@ -1,0 +1,239 @@
+export const frontmatter = {
+  title: "CLI-Anything × Codex：原理、架构与应用场景大全",
+  date: "2026-03-15",
+  description:
+    "基于 CLI-Anything 官方 README_CN 与 HARNESS，整理一份面向落地的原理、架构、场景和实操教程。",
+  summary:
+    "重点回答三件事：它为什么成立、系统怎么分层、以及在办公/设计/视频/企业旧系统中的高价值用法。",
+  category: "工程方法论",
+  tags: ["CLI-Anything", "Codex", "Agent", "HARNESS", "GUI-to-CLI", "Automation"],
+  image: "/images/blog-stack.svg",
+  readingTime: "14 min",
+};
+
+<h2 id="basic-info">基本信息</h2>
+
+- 项目：`HKUDS/CLI-Anything`
+- 本文依据：
+  - `README_CN.md`（含 Codex 实验性接入章节）
+  - `cli-anything-plugin/HARNESS.md`（方法论 SOP）
+  - `codex-skill/SKILL.md`
+- 目标：从“能跑命令”升级到“能落地业务场景”
+
+<h2 id="principles">先讲原理：为什么这套模式可行</h2>
+
+CLI-Anything 的核心不是“让 AI 会点 GUI”，而是把 GUI 软件变成可编排接口层。  
+它依赖五个工程原则：
+
+1. **Backend-first**：先操作原生数据结构，再调用真实后端渲染。
+2. **真实软件硬依赖**：缺依赖就明确失败，不做低质量 fallback。
+3. **双模式并存**：REPL 支持会话式交互，子命令支持脚本化批处理。
+4. **`--json` 优先**：既能人类调试，也能给 Agent 稳定消费。
+5. **产物验证优先**：不只看退出码，必须验证输出文件有效性和质量。
+
+<Callout tone="success">
+  <p>
+    一句话：它做的是“真实软件能力接口化”，不是“重写一个替代软件”。
+  </p>
+</Callout>
+
+<h2 id="architecture">再讲架构：Codex 在哪里发挥作用</h2>
+
+从仓库结构看，职责分层很清晰：
+
+- `cli-anything-plugin/`：方法论与命令模板（HARNESS 是权威 SOP）
+- `opencode-commands/`：OpenCode 命令入口
+- `codex-skill/`：Codex 技能入口（实验性、社区贡献）
+- `<software>/agent-harness/`：每个软件的独立可安装 CLI 包
+
+Codex skill 的作用是“接入层”，不是新架构。它复用了同一套 HARNESS 流程：
+
+```text
+自然语言任务 -> build/refine/validate 流程 -> 生成 cli-anything-<software> 包
+            -> pip install -e . -> REPL/子命令调用 -> --json 给上层 Agent 编排
+```
+
+这就是为什么它能跨 Claude/OpenCode/Codex 保持一致产物结构。
+
+<h2 id="how-to-use">如何使用：从安装到可运行</h2>
+
+第一步，安装 Codex skill：
+
+```bash
+git clone https://github.com/HKUDS/CLI-Anything.git
+bash CLI-Anything/codex-skill/scripts/install.sh
+```
+
+默认安装路径：
+
+- `$CODEX_HOME/skills/cli-anything`
+- 或 `~/.codex/skills/cli-anything`（未设置 `CODEX_HOME` 时）
+
+第二步，在 Codex 中直接描述任务：
+
+```text
+Use CLI-Anything to build a harness for ./gimp
+Use CLI-Anything to refine ./shotcut for picture-in-picture workflows
+Use CLI-Anything to validate ./libreoffice
+```
+
+第三步，使用生成的 CLI：
+
+```bash
+cd <software>/agent-harness
+pip install -e .
+
+which cli-anything-<software>
+cli-anything-<software> --help
+cli-anything-<software>
+cli-anything-<software> --json <command>
+```
+
+<h2 id="scenario-matrix">全面场景矩阵：不止一种应用</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th>场景方向</th>
+      <th>典型软件</th>
+      <th>核心价值</th>
+      <th>典型产出</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>办公文档工厂</td>
+      <td>LibreOffice</td>
+      <td>批量结构化出文档</td>
+      <td>合同、报告、报价单</td>
+    </tr>
+    <tr>
+      <td>图像批处理</td>
+      <td>GIMP</td>
+      <td>模板化渲染与导出</td>
+      <td>电商主图、活动图</td>
+    </tr>
+    <tr>
+      <td>矢量与图表</td>
+      <td>Inkscape / Draw.io</td>
+      <td>规则化生成图稿</td>
+      <td>架构图、流程图</td>
+    </tr>
+    <tr>
+      <td>视频流水线</td>
+      <td>Shotcut / Kdenlive</td>
+      <td>时间线自动编排</td>
+      <td>宣发短视频、剪辑素材</td>
+    </tr>
+    <tr>
+      <td>3D 渲染</td>
+      <td>Blender</td>
+      <td>场景参数化批渲染</td>
+      <td>商品渲染图、宣传图</td>
+    </tr>
+    <tr>
+      <td>音频后期</td>
+      <td>Audacity / sox</td>
+      <td>标准化降噪与混音</td>
+      <td>播客、课程音频</td>
+    </tr>
+    <tr>
+      <td>直播录制编排</td>
+      <td>OBS Studio</td>
+      <td>场景切换与录制自动化</td>
+      <td>直播切片、录播素材</td>
+    </tr>
+    <tr>
+      <td>旧系统 Agent 化</td>
+      <td>任意 GUI 老系统</td>
+      <td>低侵入改造可编排接口</td>
+      <td>审计友好的业务操作流</td>
+    </tr>
+    <tr>
+      <td>QA 回归验证</td>
+      <td>任意可导出软件</td>
+      <td>产物自动比对与验收</td>
+      <td>回归报告、失败定位数据</td>
+    </tr>
+    <tr>
+      <td>教学实验平台</td>
+      <td>任意开源 GUI</td>
+      <td>实验可复现可评分</td>
+      <td>标准化作业产物</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2 id="practical-recipes">应用层教程：五个可直接复用的落地模板</h2>
+
+<h3 id="recipe-doc">模板 1：运营文档自动生成</h3>
+
+1. 读取业务数据（订单、商品、渠道、周期）。
+2. 生成/更新原生项目文件（如 ODF）。
+3. 调真实 LibreOffice 导出 PDF/DOCX。
+4. 校验关键字段和页数后归档。
+
+这个模板适合先做试点，因为规则清晰、可验证性强。
+
+<h3 id="recipe-ecom-visual">模板 2：电商素材批量出图</h3>
+
+1. 固化一组模板参数（标题、价格、卖点、底图）。
+2. 用 CLI 批量写入参数并调用 GIMP/Inkscape 导出。
+3. 自动做分辨率/留白/文件大小检查。
+4. 把不合格样本回流人工修订，再二次批跑。
+
+这类任务的收益通常非常直接，能快速形成 ROI。
+
+<h3 id="recipe-video">模板 3：短视频半自动剪辑</h3>
+
+1. 基于素材清单构建时间线结构。
+2. 自动插入片头片尾、字幕、音轨基础处理。
+3. 交真实渲染后端输出视频。
+4. 校验时长、码率和关键帧后进入审核。
+
+关键点是把“重复操作”自动化，把“创意判断”留给人。
+
+<h3 id="recipe-legacy">模板 4：企业旧 GUI 系统低侵入改造</h3>
+
+1. 只抽最小闭环命令：`create/query/export/validate`。
+2. 先从只读和低风险操作上线，积累日志与成功率。
+3. 补齐 `--json` 输出和统一错误语义。
+4. 再让上层 Agent 接审批、重试、通知等流程。
+
+不重写系统也能进入 Agent 编排，这是这类方案的现实价值。
+
+<h3 id="recipe-qa">模板 5：QA 回归自动验收</h3>
+
+1. 对每次改动自动重建目标产物。
+2. 检查格式结构、关键指标和业务规则。
+3. 生成结构化差异报告（可直接投喂 Agent）。
+4. 失败样本附带最小复现命令。
+
+这能把“靠经验找问题”变成“靠证据定位问题”。
+
+<h2 id="rollout">团队落地路线：四步走</h2>
+
+1. 选一个高重复、低风险流程做首个试点。
+2. 首批只做 5-10 条高频命令，不追求全覆盖。
+3. 强制每条命令可 `--json`，并定义稳定错误语义。
+4. CI 里跑真实软件 E2E 与安装后子进程测试，确保上线质量。
+
+<h2 id="risks">边界与风险</h2>
+
+1. **依赖风险**：真实软件未安装时必须清晰失败，不可静默降级。
+2. **验证风险**：只测中间文件会漏掉渲染层问题，必须验最终产物。
+3. **维护风险**：GUI 软件升级会影响接口映射，需要持续回归。
+4. **范围风险**：如果一开始试图覆盖全部功能，项目很容易失控。
+
+<h2 id="summary">总结</h2>
+
+CLI-Anything × Codex 的价值不在“多一个技能入口”，而在把 GUI 软件 Agent 化变成可复制工程套路：  
+**先后端、再命令、强验证、可发布、可编排。**
+
+如果你要真正落地，建议从一个可量化业务流程试点，跑通后再扩展到跨团队场景。
+
+<h2 id="references">参考链接</h2>
+
+- [CLI-Anything README_CN](https://github.com/HKUDS/CLI-Anything/blob/main/README_CN.md)
+- [HARNESS.md](https://github.com/HKUDS/CLI-Anything/blob/main/cli-anything-plugin/HARNESS.md)
+- [codex-skill/SKILL.md](https://github.com/HKUDS/CLI-Anything/blob/main/codex-skill/SKILL.md)

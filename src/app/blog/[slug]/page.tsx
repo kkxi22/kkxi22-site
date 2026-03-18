@@ -4,7 +4,7 @@ import { notFound } from "next/navigation";
 
 import { mdxComponents } from "@/components/mdx-components";
 import { SiteShell } from "@/components/site-shell";
-import { buildBlogSidebar, blogPosts, getBlogPost } from "@/lib/content";
+import { blogPosts, getBlogPost } from "@/lib/content";
 
 export function generateStaticParams() {
   return blogPosts.map((post) => ({ slug: post.slug }));
@@ -52,7 +52,7 @@ export default async function BlogPostPage({
   const PostComponent = post.Component;
 
   return (
-    <SiteShell currentPath={post.href} sidebar={buildBlogSidebar()} toc={post.toc}>
+    <SiteShell>
       <article className="article pb-8">
         <div className="mb-3 flex flex-wrap gap-3 text-sm text-foreground-soft">
           <span>{post.category}</span>

@@ -1,0 +1,73 @@
+export const frontmatter = {
+  title: "最近一些 Agent 认知：OS 与 Agent-native 应用【转载】",
+  date: "2026-03-18",
+  description: "转载 yan5xu 关于 Agent OS 与 Agent-native Application 的思考，含原推文配图。",
+  summary:
+    "核心观点：垂类不要做 Agent OS，而要做 Agent 之上的 Application，用领域状态和基础设施建立不可复制壁垒。",
+  category: "转载",
+  tags: ["Agent", "Agent-native", "OS", "Application", "转载"],
+  image: "/images/blog-workflow.svg",
+  readingTime: "8 min",
+};
+
+<h2 id="basic-info">基本信息</h2>
+
+- 原帖作者：`yan5xu`
+- 原帖链接：https://x.com/yan5xu/status/2033721014413402303
+- 整理时间：2026-03-18
+- 说明：以下为原文转载整理，保留原作者观点与结构。
+
+<h2 id="original-content">原文</h2>
+
+1. Agent 是一种交互范式，就像手机是一种交互范式。你通过手机购物、社交、理财，但不会为了购物专门买一部手机。Agent 也一样。垂类不应该尝试做 Agent（做手机），应该做 Agent 上面的应用。
+2. 因为战场完全不同。Agent 的战场是推理能力、编排效率、交互体验。垂类的优势是领域深度、业务理解、行业数据，这些优势在 OS 战场上一点用都没有。你拿领域知识去跟 OpenAI、Anthropic 比推理能力，是拿刀去打坦克。
+3. 而且 OS 层的市场结构天然收敛。PC 时代活下来 Windows 和 Mac，移动时代活下来 iOS 和 Android。Agent OS 也不会有几十个赢家。你花三年做垂类 Agent 正面硬刚，这三年本可以在自己的领域建一座别人进不来的根据地。
+4. 不做 Agent，那做 Skill 行不行？Skill 有两面：prompt 和 script。
+5. Prompt 是一组提示词，给 Agent 一个点拨。有价值，但推理工作仍是 Agent 自己在做，容量和带宽都在消耗，而且 prompt 是文本，可复制。
+6. Script 是封装好的外部逻辑（脚本、二进制、API）。逻辑在外部执行，Agent 不用自己推理领域问题，注意力带宽消耗下降。比 prompt 更进一步，从“指路”变成“代劳”。
+7. 但 script 如果没有外部状态（没有数据库、没有用户积累、没有沉淀），逻辑仍然可复现。
+8. 所以 skill 的天花板是卖 copy。你做得越好，抄得越容易。Skill 是接口，接口背后若没有资产，就是裸奔。
+9. Agent 有两个物理约束，不是 bug，也不是下一代模型能“修掉”的。
+10. 第一个：上下文容量（Context 容器有限，塞得越多性能越差）。
+11. 第二个：注意力带宽（任务间会争抢注意力，互相干扰）。
+12. 如果 Agent 有无限容量和完美注意力，它可以全做。但现实是容量有限、带宽有限，这也是 Agent-native Application 存在的根本原因。
+13. Skill 可复现的根源是“没有外部状态”。解法是让接口背后长出不可复制的东西。
+14. 领域状态：用户业务上下文会持续生长，越用越厚。
+15. 基础设施成本：小模型、知识库、实时数据管线需要持续投入。
+16. 规模经济成本优势：服务规模越大，单位成本越低。
+17. Skill 背后有这三样，就不再只是 skill，而是 Agent-native Application。
+18. Application 给 Agent 的两种价值：能力解锁（突破容量）与认知卸载（释放带宽）。
+19. 领域状态不是通用 memory，而是垂类业务状态机，其商业属性是资产沉淀。
+20. OS 命题是 WHAT（做什么），Application 命题是 HOW（怎么做）。两者边界应清晰分工。
+21. 在 Agent 范式里，优秀 Application 会让 OS 更聪明，OS 也会更精准调用 Application，形成认知共生飞轮。
+22. The best context is no context。Agent 越轻，表现越好。
+
+<h2 id="structured-summary">结构化整理</h2>
+
+因果主链：
+
+`Agent 是 OS` → `垂类做 OS 是找死` → `Skill 天花板是卖 copy` → `根因是容量与带宽双约束` → `解法是 Agent-native Application` → `价值是能力解锁 + 认知卸载` → `OS 与 Application 认知共生`。
+
+![配图 1](https://pbs.twimg.com/media/HDk5lq5bgAAoWwV?format=jpg&name=4096x4096)
+
+三层光谱：
+
+- Prompt：给方向，不减负，易复制。
+- Script：可代劳，减带宽，但无外部状态时仍可复现。
+- Application：代劳 + 持久状态 + 基础设施，壁垒最高。
+
+![配图 2](https://pbs.twimg.com/media/HDk55X-bEAAkmwX?format=jpg&name=large)
+
+OS 与 Application 的分界：
+
+- OS：负责意图与跨域上下文（WHAT）。
+- Application：负责领域状态与业务历史（HOW）。
+
+两者通过接口协作，形成认知共生。
+
+![配图 3](https://pbs.twimg.com/media/HDk6C0abEAcTGZd?format=jpg&name=large)
+
+<h2 id="references">来源链接</h2>
+
+- [原推文](https://x.com/yan5xu/status/2033721014413402303)
+- [原文轮播图（第 3 张，含全图列表）](https://x.com/yan5xu/article/2033721014413402303/media/2033720526838108167)

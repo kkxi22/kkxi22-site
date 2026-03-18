@@ -1,0 +1,227 @@
+export const frontmatter = {
+  title: "构建 Claude Code 的经验：我们如何使用 Skills【译·完整版】",
+  date: "2026-03-18",
+  description: "Anthropic 团队关于 Skills 的实战总结完整版译文，含原推文配图。",
+  summary:
+    "覆盖 Skills 分类、编写技巧、渐进式披露、按需钩子、团队分发治理等完整内容，并补齐原推文图片。",
+  category: "译文",
+  tags: ["Claude Code", "Skills", "Anthropic", "Translation", "Workflow"],
+  image: "https://pbs.twimg.com/media/HDo4-t_W8AAbv9D?format=jpg&name=large",
+  readingTime: "18 min",
+};
+
+<h2 id="basic-info">基本信息</h2>
+
+- 原文标题：Lessons from Building Claude Code: How We Use Skills
+- 作者：Thariq Shihipar
+- 译文来源：宝玉（X）
+- 原帖链接：https://x.com/dotey/status/2034002188994060691
+- 文章链接：https://x.com/dotey/article/2034002188994060691
+- 整理时间：2026-03-18
+- 说明：本文为完整版整理，并附上原推文中的全部配图。
+
+![推文头图](https://pbs.twimg.com/media/HDo4-t_W8AAbv9D?format=jpg&name=large)
+
+![文章封面图](https://pbs.twimg.com/media/HDl2jn9a0AAZkyz?format=jpg&name=large)
+
+<h2 id="why-skills-matter">为何 Skills 重要</h2>
+
+Skills 已经成为 Claude Code 中使用最广泛的扩展点（extension points）之一。它们灵活、容易制作，分发起来也很简单。
+
+但也正因为太灵活，你很难知道怎样用才最好。什么类型的 Skills 值得做？写出好 Skill 的秘诀是什么？什么时候该把它们分享给别人？
+
+我们在 Anthropic 内部大量使用 Claude Code 的 Skills（技能扩展），目前活跃使用的已经有几百个。以下就是我们在用 Skills 加速开发过程中总结出的经验。
+
+如果你还不了解 Skills，建议先阅读 Claude Code 官方文档中的 Skills 介绍与最新更新说明，本文假设你已经对 Skills 有了基本了解。
+
+我们经常听到一个误解，认为 Skills“只不过是 markdown 文件”。但 Skills 最有意思的地方恰恰在于它们不只是文本文件，它们是文件夹，可以包含脚本、资源文件、数据等，智能体可以发现、探索并使用这些内容。
+
+在 Claude Code 中，Skills 还支持插件配置能力，包括注册动态钩子（hooks）。
+
+我们发现，Claude Code 中最有意思的那些 Skills，往往就是创造性地利用了这些配置选项和文件夹结构。
+
+在梳理了我们所有 Skills 后，我们注意到它们大致可以归为几个反复出现的类别。最好的 Skills 通常清晰地落在某一个类别里；让人困惑的 Skills 往往横跨多个类别。这不是终极清单，但如果你想检查团队是否缺少某类 Skill，这是很好的思路。
+
+<h2 id="skill-categories">Skills 分类</h2>
+
+![配图 1：分类框架](https://pbs.twimg.com/media/HDo5BLyXEAA8McR?format=jpg&name=large)
+
+帮助你正确使用某个库、命令行工具或 SDK 的 Skills。它们既可以针对内部库，也可以针对 Claude Code 偶尔会犯错的常用库。这类 Skills 通常会包含参考代码片段，以及 Claude 在写代码时需要避免的踩坑点（gotchas）列表。
+
+示例：
+
+- `billing-lib`：内部计费库的边界情况、footguns 等。
+- `internal-platform-cli`：内部 CLI 每个子命令及适用场景示例。
+- `frontend-design`：让 Claude 更好理解你的设计系统。
+
+描述如何测试或验证代码是否正常工作的 Skills。通常会搭配 Playwright、tmux 等外部工具来完成验证。
+
+验证类 Skills 对于确保 Claude 输出正确性非常有用。值得安排一个工程师花一周专门打磨验证 Skills。
+
+还可以让 Claude 录制输出过程视频，或在每一步强制执行程序化状态断言。这通常通过在 Skill 中包含脚本来实现。
+
+示例：
+
+- `signup-flow-driver`：无头浏览器跑通注册到引导流程，并可插入状态断言钩子。
+- `checkout-verifier`：用 Stripe 测试卡驱动结账 UI，验证发票终态是否正确。
+- `tmux-cli-driver`：针对需要 TTY 的交互式 CLI 测试。
+
+连接数据和监控体系的 Skills。这类 Skills 可能包含带凭证的数据获取库、仪表盘 ID，以及常用数据工作流说明。
+
+示例：
+
+- `funnel-query`：注册→激活→付费转化分析所需事件与规范用户表。
+- `cohort-compare`：对比两个人群留存/转化，标注统计显著差异。
+- `grafana`：数据源 UID、集群名称、问题到仪表盘映射。
+
+把重复性工作流自动化成一条命令的 Skills。这类 Skills 常依赖其他 Skills 或 MCP。对于这类 Skills，把执行结果保存到日志文件有助于模型保持一致性并反思历史执行。
+
+示例：
+
+- `standup-post`：汇总任务追踪、GitHub 活动、Slack 历史，生成 delta-only 站会汇报。
+- `create-<ticket-system>-ticket`：强制 schema 并执行后续通知流程。
+- `weekly-recap`：已合并 PR + 已关闭工单 + 部署记录，生成周报。
+
+为代码库中的特定功能生成脚手架（boilerplate）的 Skills。和脚本组合时尤其有用，特别是当脚手架包含自然语言要求，无法纯代码覆盖时。
+
+示例：
+
+- `new-<framework>-workflow`：按注解搭建服务/工作流/处理器。
+- `new-migration`：数据库迁移模板 + 常见踩坑点。
+- `create-app`：新建内部应用并预配认证、日志和部署配置。
+
+在团队内部执行代码质量标准并辅助审查的 Skills。可包含确定性脚本或工具来保障可靠性，也可作为钩子或 GitHub Action 运行。
+
+示例：
+
+- `adversarial-review`：用“没见过代码”的子智能体反复挑刺和修复，直到问题退化为吹毛求疵。
+- `code-style`：强制代码风格，补齐 Claude 默认不稳的规范。
+- `testing-practices`：指导如何写测试、重点测什么。
+
+帮你拉取、推送和部署代码的 Skills。这类 Skills 也可能引用其他 Skills 来收集上下文。
+
+示例：
+
+- `babysit-pr`：监控 PR，重试 flaky CI，解决冲突并启用自动合并。
+- `deploy-<service>`：构建→冒烟→渐进切流→指标恶化自动回滚。
+- `cherry-pick-prod`：隔离 worktree→cherry-pick→冲突处理→模板化建 PR。
+
+接收一个现象（Slack 消息、告警、错误特征），引导你走完多工具排查流程并输出结构化报告的 Skills。
+
+示例：
+
+- `<service>-debugging`：将现象映射到工具与查询模式。
+- `oncall-runner`：拉取告警→检查常见嫌疑→格式化输出结论。
+- `log-correlator`：给定请求 ID，从所有相关系统拉取匹配日志。
+
+执行日常维护和运维操作的 Skills，其中一些涉及破坏性操作，需要安全护栏。
+
+示例：
+
+- `<resource>-orphans`：识别孤立资源→通知→观察→确认后级联清理。
+- `dependency-management`：组织内依赖审批流程。
+- `cost-investigation`：定位存储/带宽成本异常的桶和查询模式。
+
+<h2 id="writing-practices">编写最佳实践</h2>
+
+![配图 2：如何写 Skill](https://pbs.twimg.com/media/HDo5Dl9XsAAWY7o?format=jpg&name=large)
+
+确定了要做什么 Skill 之后，怎么写？以下是总结出的最佳实践和技巧。
+
+我们最近还发布了配套工具，让在 Claude Code 中创建 Skills 变得更简单。
+
+Claude Code 对你的代码库已经很了解，Claude 对编程也有很多默认观点。如果 Skill 主要提供知识，就要优先补充能打破 Claude 常规思维模式的信息。
+
+`frontend-design` 是很好的例子。它由 Anthropic 工程师和用户反复迭代构建，用来改进 Claude 的设计品味，刻意避开典型套路，比如 Inter 字体和紫色渐变。
+
+![配图 3：设计类 Skill 示例](https://pbs.twimg.com/media/HDo5GDjbEAMAlZj?format=jpg&name=large)
+
+任何 Skill 中信息密度最高的部分通常是 gotchas（踩坑点）章节。这些章节应根据 Claude 的真实失败样本逐步积累，并持续更新。
+
+![配图 4：gotchas 持续迭代](https://pbs.twimg.com/media/HDo5JN1WQAAPmnG?format=jpg&name=large)
+
+<h2 id="progressive-disclosure">渐进式披露</h2>
+
+Skill 是一个文件夹，不是单一 markdown。应把文件系统当作上下文工程（Context Engineering）和渐进式披露（progressive disclosure）工具。告诉 Claude Skill 内有哪些文件，它会在需要时读取。
+
+最简单的渐进式披露方式，是把细节放到其他 markdown 文件，比如把函数签名和用法示例放进 `references/api.md`。
+
+如果输出目标是 markdown 文件，也可以在 `assets/` 放模板供复制。
+
+你可以把参考资料、脚本、示例分目录组织，帮助 Claude 更高效执行。
+
+Claude 会努力遵循你的指令，而 Skills 复用性很强，所以别把指令写得过于死板。给足必要信息，同时保留适配具体上下文的灵活性。
+
+![配图 5：指令过死的问题](https://pbs.twimg.com/media/HDo5Lo1W8AArlpo?format=jpg&name=large)
+
+![配图 6：更灵活的指令写法](https://pbs.twimg.com/media/HDo5OrObEAAENZA?format=jpg&name=large)
+
+<h2 id="activation-and-memory">按需激活与记忆</h2>
+
+有些 Skills 需要用户先提供上下文来完成初始化。例如做一个“站会发 Slack” Skill，你可能需要 Claude 先询问发到哪个频道。
+
+一个好做法是把配置保存在 Skill 目录的 `config.json`。如果配置缺失，智能体再向用户提问。
+
+如果需要结构化多选交互，可以让 Claude 使用 `AskUserQuestion` 工具。
+
+当 Claude Code 启动会话时，会构建“可用 Skills + description”的清单。Claude 通过扫描清单判断是否触发某个 Skill。所以 `description` 不是摘要，而是“何时触发”的条件描述。
+
+![配图 7：description 触发语义](https://pbs.twimg.com/media/HDo5Rspa0AApYXU?format=jpg&name=large)
+
+![配图 8：触发条件写法](https://pbs.twimg.com/media/HDo5UrhbEAAqlvQ?format=jpg&name=large)
+
+有些 Skills 可以通过内部存储实现某种“记忆”。最简单是追加日志或 JSON，更复杂可以用 SQLite。
+
+例如 `standup-post` 可以保留 `standups.log`，记录历史站会内容。下次运行时 Claude 读取历史，就能知道“从昨天到今天变化了什么”。
+
+Skill 目录内数据可能在升级时被删除，长期数据应存放到稳定目录。目前可使用 `${CLAUDE_PLUGIN_DATA}` 作为每个插件的稳定数据存储。
+
+你能给 Claude 的最强工具之一就是代码。给它脚本和库，让它把精力放在“如何组合编排”，而不是反复重写样板代码。
+
+例如在数据科学 Skill 中，你可以提供事件数据获取函数库和辅助函数。Claude 就能即时生成脚本，完成更高级分析（如回答“周二发生了什么”）。
+
+![配图 9：代码库 + 组合编排](https://pbs.twimg.com/media/HDo5XLwXcAA-ocz?format=jpg&name=large)
+
+![配图 10：高级分析输出](https://pbs.twimg.com/media/HDo5ZkUW0AAMmfP?format=jpg&name=large)
+
+Skills 还可以包含按需激活钩子（On Demand Hooks），并在会话内持续生效。这适合主观且不想常开、但关键时刻很有价值的能力。
+
+示例：
+
+- `/careful`：通过 `PreToolUse` 匹配器拦截 `rm -rf`、`DROP TABLE`、force-push、`kubectl delete` 等危险命令。
+- `/freeze`：阻止对指定目录之外的 Edit/Write，避免调试时误改无关代码。
+
+<h2 id="distribution-and-governance">分发与治理</h2>
+
+Skills 的一个巨大优势是可在团队共享。
+
+你可以通过两种方式分发 Skills：
+
+- 提交到代码仓库（`./.claude/skills`）。
+- 做成插件并建设 Claude Code 插件市场（Plugin Marketplace）。
+
+对少仓库协作的小团队，直接入库通常够用。但每个 Skill 都会增加一点模型上下文负担。规模扩大后，内部插件市场更适合按需分发和按需安装。
+
+关于哪些 Skill 进插件市场、如何提交流程，Anthropic 倾向让有价值的 Skill 自然涌现，而不是中心化审批。
+
+常见流程是：作者先把 Skill 放到 GitHub 沙盒目录并在 Slack 推广；获得足够关注后，再提交 PR 进入正式插件市场。
+
+需要注意：做出低质量或重复 Skill 很容易，所以正式发布前应有审核机制。
+
+Skill 之间依赖在当前插件市场中还未原生支持，但可以通过“按名字引用其他 Skill”做弱依赖，只要对方已安装，模型就能调用。
+
+为了评估 Skill 表现，Anthropic 使用 `PreToolUse` 钩子记录内部 Skill 使用数据，用于识别热门 Skill 或低触发 Skill。
+
+<h2 id="final-thoughts">结语</h2>
+
+Skills 是 AI 智能体非常强大且灵活的工具，但这个方向仍处早期阶段，大家都在探索最佳实践。
+
+与其把这篇文章当作权威手册，不如把它看作一套经过实践验证的经验集合。理解 Skills 最好的方式就是动手实践、持续试验、观察什么对你的团队有效。
+
+很多优秀 Skills 最初只是几行文字和一个 gotcha，后来因为不断补充 Claude 遇到的新边界，才逐步进化成高质量能力包。
+
+<h2 id="references">来源链接</h2>
+
+- [X 译文原帖（宝玉）](https://x.com/dotey/status/2034002188994060691)
+- [X 文章页](https://x.com/dotey/article/2034002188994060691)
+- [X 轮播最后一页（含全部原图链接）](https://x.com/dotey/article/2034002188994060691/media/2034001293119770624)

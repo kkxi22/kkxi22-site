@@ -4,14 +4,14 @@ import "./globals.css";
 export const metadata: Metadata = {
   metadataBase: new URL("https://kkxi22.cn"),
   title: {
-    default: "kkxi22.cn",
-    template: "%s | kkxi22.cn",
+    default: "kkxi22",
+    template: "%s | kkxi22",
   },
   description:
-    "kkxi22 的个人站点，包含个人介绍、博客与项目展示，采用 Next.js 16、TypeScript、Tailwind CSS 4 与 MDX 构建。",
-  applicationName: "kkxi22.cn",
+    "kkxi22 的博客，聚焦个人基础设施、AI agent 与工程实践。",
+  applicationName: "kkxi22",
   authors: [{ name: "kkxi22" }],
-  keywords: ["kkxi22", "Next.js", "MDX", "个人博客", "项目展示"],
+  keywords: ["kkxi22", "博客", "Next.js", "MDX", "AI agent"],
   alternates: {
     canonical: "/",
   },
@@ -23,17 +23,15 @@ export const metadata: Metadata = {
   openGraph: {
     type: "website",
     url: "https://kkxi22.cn",
-    title: "kkxi22.cn",
-    description:
-      "个人介绍、博客与项目展示统一收纳在一个文档式站点里，风格对齐 Claude Code Docs。",
-    siteName: "kkxi22.cn",
+    title: "kkxi22",
+    description: "kkxi22 的博客，聚焦个人基础设施、AI agent 与工程实践。",
+    siteName: "kkxi22",
     images: ["/opengraph-image"],
   },
   twitter: {
     card: "summary_large_image",
-    title: "kkxi22.cn",
-    description:
-      "个人介绍、博客与项目展示统一收纳在一个文档式站点里，风格对齐 Claude Code Docs。",
+    title: "kkxi22",
+    description: "kkxi22 的博客，聚焦个人基础设施、AI agent 与工程实践。",
     images: ["/opengraph-image"],
   },
 };

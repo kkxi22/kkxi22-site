@@ -1,0 +1,183 @@
+export const frontmatter = {
+  title: "Java 微服务 + 乾坤微前端：电商 Agent 化改造蓝图",
+  date: "2026-03-15",
+  description:
+    "基于一条真实 ChatGPT Share 记录，整理前后端分离电商系统的 Agent 化改造方法：三层架构、分阶段落地和风险控制。",
+  summary:
+    "不要把“页面自动化”当主线，而是把后端业务能力结构化，再用 CLI/MCP/Tool 暴露给 Agent，前端只保留必要兜底。",
+  category: "应用架构",
+  tags: ["E-commerce", "Agent", "Java Microservices", "Qiankun", "CLI-Anything", "MCP"],
+  image: "/images/blog-workflow.svg",
+  readingTime: "11 min",
+};
+
+<h2 id="context">背景与问题</h2>
+
+原问题来自一条实践型提问：  
+“一个前后端分离的电商业务如何转化？后端 Java 微服务，前端乾坤微前端项目。”
+
+这类系统的常见误区是：直接把页面流程交给 Agent 去“点”。  
+更稳的做法是：先把业务能力结构化，再决定哪些地方需要浏览器兜底。
+
+<h2 id="key-conclusion">核心结论</h2>
+
+不要把目标理解成“把乾坤前端整体转成 CLI”。  
+正确路径是：
+
+**Java 微服务能力层 -> Agent 编排接入层 -> 浏览器兜底层**
+
+其中：
+
+1. 后端微服务是主战场。
+2. 前端乾坤是交互壳，不是主要自动化入口。
+3. Agent 以“调用业务意图接口”为主，而不是“点击页面”为主。
+4. CLI-Anything 更适合加速中后台与遗留工具接入，不适合独自承载核心交易链路。
+
+<h2 id="what-to-agentize">先分清：哪些该 Agent 化，哪些不该</h2>
+
+最应该优先改造的能力：
+
+- 商品检索、详情、库存、价格试算
+- 购物车、订单预览、订单创建
+- 履约查询、售后申请、客服检索
+- 运营后台的批处理操作（上下架、调价、审核）
+
+不建议直接自动化的高风险链路：
+
+- 自动支付
+- 自动退款
+- 自动调价/改库存（无审批）
+- 用户主登录与强风控路径
+
+<h2 id="architecture">推荐三层架构</h2>
+
+```text
+[AI Agent / Codex / OpenClaw / Claude]
+                |
+        -------------------
+        | REST / MCP / CLI |
+        | Tool Adapter     |
+        -------------------
+                |
+        -------------------
+        | Agent Gateway    |
+        | Auth / Policy /  |
+        | Audit / Idempot. |
+        -------------------
+                |
+   -----------------------------------
+   | product | cart | order | pay    |
+   | promo   | inv  | user  | cs     |
+   -----------------------------------
+                |
+         Java 微服务集群
+
+浏览器兜底层（仅必要时）
+- 登录 / 验证码 / 支付确认 / 遗留页面操作
+```
+
+这套架构的本质是：把可结构化能力留在后端，把不稳定页面交互降到最少。
+
+<h2 id="qiankun-strategy">乾坤微前端该怎么处理</h2>
+
+不是把整套壳层“自动化”，而是按子应用拆能力域：
+
+- `mfe-product`
+- `mfe-cart`
+- `mfe-checkout`
+- `mfe-order`
+- `mfe-admin-product`
+- `mfe-admin-order`
+
+然后逐个判断：
+
+1. 核心能力是否已有后端 API。
+2. 是否有关键逻辑被困在前端状态机里。
+3. 是否必须依赖真实浏览器上下文。
+
+前端需要补的一件关键事：为兜底自动化提供稳定锚点。  
+例如统一 `data-testid`、语义化错误信息、关键动作埋点与页面状态接口。
+
+<h2 id="rollout-plan">四周落地节奏（可直接照着执行）</h2>
+
+**第 1 周：能力盘点**
+
+- 列出 20 个高频业务意图（用户侧 + 运营侧）
+- 映射已有微服务接口
+- 找出必须浏览器执行的节点
+
+**第 2 周：做 Agent BFF（先覆盖订单链路）**
+
+- `product.search`
+- `order.preview`
+- `order.submit`（可先到待支付）
+- `order.status`
+- `logistics.track`
+
+**第 3 周：做运营侧工具化**
+
+- 商品批量上下架
+- 调价 dry-run
+- 库存巡检
+- 订单审核建议
+
+**第 4 周：再接 CLI/MCP 出口**
+
+- 面向 Agent 输出统一 JSON
+- 加权限模型、审批策略、幂等与审计
+- 仅对必要环节接入浏览器兜底
+
+<h2 id="cli-anything-position">CLI-Anything 在这套方案里的位置</h2>
+
+更适合：
+
+- 中后台和遗留运营工具的快速工具化
+- 已有代码库但缺正式 API 的系统
+- 需要先低成本验证 Agent 价值的试点
+
+不建议直接作为唯一主方案：
+
+- 核心交易中台
+- 高风险支付与资金链路
+- 强一致、强审计、强风控核心路径
+
+一句话：它是加速器，不是治理框架替代品。
+
+<h2 id="command-examples">示例命令与接口风格</h2>
+
+```bash
+shop product search --keyword "蓝牙耳机" --max-price 300 --json
+shop order preview --cart-id xxx --coupon AUTO --address-id xxx --json
+shop order submit --cart-id xxx --payment-method wechatpay --json
+shop ops product bulk-price-adjust --category "耳机" --percent -5 --dry-run --json
+```
+
+返回建议保持 Agent 友好格式：
+
+```json
+{
+  "success": true,
+  "status": "PENDING_PAYMENT",
+  "message": "订单已创建，等待支付",
+  "next_actions": [{ "action": "pay_order", "requires_confirmation": true }],
+  "data": { "orderId": "xxx", "amount": 29900, "currency": "CNY" }
+}
+```
+
+<h2 id="risk-control">必须同时做的治理能力</h2>
+
+1. 统一身份与鉴权：`actorId / actorType / tenantId / traceId`。
+2. 高风险动作审批：支付、退款、调价、改库存必须有策略门控。
+3. 幂等与补偿：核心链路必须有 `idempotency key` 与补偿机制。
+4. 全链路审计：每次 agent 调用都要可追踪、可回放、可问责。
+
+<h2 id="summary">总结</h2>
+
+前后端分离电商系统的 Agent 化，不是“把网页自动化做得更强”，而是“把业务能力接口化做得更稳”。  
+对 Java 微服务 + 乾坤架构，最实用路径是：
+
+**后端能力先结构化 -> Agent 接入层统一暴露 -> 浏览器只做少量兜底。**
+
+<h2 id="references">来源</h2>
+
+- [ChatGPT Share 原始记录](https://chatgpt.com/share/69b68129-5054-8002-8a6e-e8d56b60867e)

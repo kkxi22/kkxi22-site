@@ -1,24 +1,19 @@
+import fs from "node:fs";
+import path from "node:path";
 import type { ComponentType } from "react";
 
+import BlogAgentNativeEcommercePost from "@/content/blog/agent-native-ecommerce-java-qiankun-blueprint.mdx";
+import BlogAgentCognitionRepost from "@/content/blog/agent-cognition-os-and-agent-native-applications-repost.mdx";
 import BlogBbBrowserCompetitivePost from "@/content/blog/bb-browser-competitive-ecommerce-playbook.mdx";
 import BlogBbBrowserPost from "@/content/blog/bb-browser-source-deep-dive.mdx";
+import BlogCliAnythingCodexPost from "@/content/blog/cli-anything-codex-application-playbook.mdx";
 import BlogWorkflowPost from "@/content/blog/human-loop-workflows.mdx";
+import BlogHowWeUseSkillsPost from "@/content/blog/lessons-from-building-claude-code-how-we-use-skills-translation.mdx";
 import BlogStackPost from "@/content/blog/nextjs-personal-site-stack.mdx";
-import ProjectAgents from "@/content/projects/terminal-agents.mdx";
-import ProjectHomelab from "@/content/projects/home-lab.mdx";
 
 export type TocItem = {
   id: string;
   label: string;
-};
-
-export type SidebarGroup = {
-  title: string;
-  items: Array<{
-    label: string;
-    href: string;
-    external?: boolean;
-  }>;
 };
 
 export type ContentEntry = {
@@ -32,20 +27,116 @@ export type ContentEntry = {
   image: string;
   readingTime?: string;
   tags?: string[];
-  tech?: string[];
   toc: TocItem[];
   Component: ComponentType<{ components?: Record<string, ComponentType | string> }>;
 };
 
-export const topTabs = [
-  { label: "概览", href: "/" },
-  { label: "个人介绍", href: "/#profile" },
-  { label: "博客", href: "/blog/" },
-  { label: "项目", href: "/projects/" },
-  { label: "联系", href: "/#contact" },
-];
+export type BlogPreview = Pick<
+  ContentEntry,
+  "slug" | "href" | "title" | "description" | "summary" | "date" | "category" | "image" | "readingTime" | "tags"
+> & {
+  searchText: string;
+};
 
 export const blogPosts: ContentEntry[] = [
+  {
+    slug: "agent-cognition-os-and-agent-native-applications-repost",
+    href: "/blog/agent-cognition-os-and-agent-native-applications-repost/",
+    title: "最近一些 Agent 认知：OS 与 Agent-native 应用【转载】",
+    description: "转载 yan5xu 关于 Agent OS 与 Agent-native Application 的思考，含原推文配图。",
+    summary:
+      "核心观点：垂类不要做 Agent OS，而要做 Agent 之上的 Application，用领域状态和基础设施建立不可复制壁垒。",
+    date: "2026-03-18",
+    category: "转载",
+    image: "/images/blog-workflow.svg",
+    readingTime: "8 min",
+    tags: ["Agent", "Agent-native", "OS", "Application", "转载"],
+    toc: [
+      { id: "basic-info", label: "基本信息" },
+      { id: "original-content", label: "原文" },
+      { id: "structured-summary", label: "结构化整理" },
+      { id: "references", label: "来源链接" },
+    ],
+    Component: BlogAgentCognitionRepost,
+  },
+  {
+    slug: "lessons-from-building-claude-code-how-we-use-skills-translation",
+    href: "/blog/lessons-from-building-claude-code-how-we-use-skills-translation/",
+    title: "构建 Claude Code 的经验：我们如何使用 Skills【译·完整版】",
+    description: "Anthropic 团队关于 Skills 的实战总结完整版译文，含原推文配图。",
+    summary:
+      "覆盖 Skills 分类、编写技巧、渐进式披露、按需钩子与团队治理，并补齐原推文配图。",
+    date: "2026-03-18",
+    category: "译文",
+    image: "/images/blog-workflow.svg",
+    readingTime: "18 min",
+    tags: ["Claude Code", "Skills", "Anthropic", "Translation", "Workflow"],
+    toc: [
+      { id: "basic-info", label: "基本信息" },
+      { id: "why-skills-matter", label: "为何 Skills 重要" },
+      { id: "skill-categories", label: "Skills 分类" },
+      { id: "writing-practices", label: "编写最佳实践" },
+      { id: "progressive-disclosure", label: "渐进式披露" },
+      { id: "activation-and-memory", label: "按需激活与记忆" },
+      { id: "distribution-and-governance", label: "分发与治理" },
+      { id: "final-thoughts", label: "结语" },
+      { id: "references", label: "来源链接" },
+    ],
+    Component: BlogHowWeUseSkillsPost,
+  },
+  {
+    slug: "cli-anything-codex-application-playbook",
+    href: "/blog/cli-anything-codex-application-playbook/",
+    title: "CLI-Anything × Codex：原理、架构与应用场景大全",
+    description: "基于 CLI-Anything 官方 README_CN 与 HARNESS，整理可直接落地的场景与教程。",
+    summary:
+      "围绕原理、架构和实操展开：先解释为什么可行，再给出从安装到场景落地的工程化模板。",
+    date: "2026-03-15",
+    category: "工程方法论",
+    image: "/images/blog-stack.svg",
+    readingTime: "14 min",
+    tags: ["CLI-Anything", "Codex", "Agent", "HARNESS", "GUI-to-CLI", "Automation"],
+    toc: [
+      { id: "basic-info", label: "基本信息" },
+      { id: "principles", label: "核心原理" },
+      { id: "architecture", label: "架构拆解" },
+      { id: "how-to-use", label: "如何使用" },
+      { id: "scenario-matrix", label: "场景矩阵" },
+      { id: "practical-recipes", label: "应用层教程" },
+      { id: "rollout", label: "团队落地路线" },
+      { id: "risks", label: "边界与风险" },
+      { id: "summary", label: "总结" },
+      { id: "references", label: "参考链接" },
+    ],
+    Component: BlogCliAnythingCodexPost,
+  },
+  {
+    slug: "agent-native-ecommerce-java-qiankun-blueprint",
+    href: "/blog/agent-native-ecommerce-java-qiankun-blueprint/",
+    title: "Java 微服务 + 乾坤微前端：电商 Agent 化改造蓝图",
+    description: "基于真实讨论记录，拆解前后端分离电商系统如何做 Agent 化改造与分阶段落地。",
+    summary:
+      "核心方法是三层分治：后端能力层、Agent 接入层、浏览器兜底层；避免把页面自动化当成主方案。",
+    date: "2026-03-15",
+    category: "应用架构",
+    image: "/images/blog-workflow.svg",
+    readingTime: "11 min",
+    tags: ["E-commerce", "Agent", "Java Microservices", "Qiankun", "CLI-Anything", "MCP"],
+    toc: [
+      { id: "context", label: "背景与问题" },
+      { id: "key-conclusion", label: "核心结论" },
+      { id: "what-to-agentize", label: "改造范围" },
+      { id: "architecture", label: "三层架构" },
+      { id: "qiankun-strategy", label: "乾坤策略" },
+      { id: "rollout-plan", label: "落地节奏" },
+      { id: "cli-anything-position", label: "CLI-Anything 定位" },
+      { id: "command-examples", label: "命令示例" },
+      { id: "risk-control", label: "风险治理" },
+      { id: "summary", label: "总结" },
+      { id: "references", label: "来源" },
+    ],
+    Component: BlogAgentNativeEcommercePost,
+  },
   {
     slug: "bb-browser-competitive-ecommerce-playbook",
     href: "/blog/bb-browser-competitive-ecommerce-playbook/",
@@ -128,98 +219,42 @@ export const blogPosts: ContentEntry[] = [
   },
 ];
 
-export const projects: ContentEntry[] = [
-  {
-    slug: "terminal-agents",
-    href: "/projects/terminal-agents/",
-    title: "Terminal Agents",
-    description: "把终端代理、自动化脚本与文档界面编织成一套个人生产环境。",
-    summary: "一个围绕命令行、浏览器自动化和记忆文件展开的个人 AI 工作台。",
-    category: "Automation",
-    image: "/images/project-agent.svg",
-    tech: ["Next.js 16", "MDX", "Agent Browser", "Nginx"],
-    toc: [
-      { id: "overview", label: "项目概览" },
-      { id: "architecture", label: "架构" },
-      { id: "results", label: "结果" },
-    ],
-    Component: ProjectAgents,
-  },
-  {
-    slug: "home-lab",
-    href: "/projects/home-lab/",
-    title: "Home Lab Surface",
-    description: "让 Mac mini 上的个人服务以统一站点入口被发现、维护和发布。",
-    summary: "把域名、静态导出、代理入口和内容管理整合到同一个发布路径。",
-    category: "Infrastructure",
-    image: "/images/project-homelab.svg",
-    tech: ["Static Export", "OpenClaw", "Launchd", "HTTPS"],
-    toc: [
-      { id: "lab-goal", label: "目标" },
-      { id: "surface", label: "站点界面" },
-      { id: "deployment", label: "部署" },
-    ],
-    Component: ProjectHomelab,
-  },
-];
-
-export const homeToc: TocItem[] = [
-  { id: "overview", label: "概览" },
-  { id: "profile", label: "个人介绍" },
-  { id: "latest", label: "最近更新" },
-  { id: "projects", label: "精选项目" },
-  { id: "contact", label: "联系" },
-];
-
-export const homeSidebar: SidebarGroup[] = [
-  {
-    title: "站点导航",
-    items: [
-      { label: "概览", href: "/" },
-      { label: "博客", href: "/blog/" },
-      { label: "项目", href: "/projects/" },
-    ],
-  },
-  {
-    title: "最近文章",
-    items: blogPosts.map((post) => ({ label: post.title, href: post.href })),
-  },
-  {
-    title: "项目展示",
-    items: projects.map((project) => ({ label: project.title, href: project.href })),
-  },
-];
-
-export function buildBlogSidebar(): SidebarGroup[] {
-  return [
-    {
-      title: "博客",
-      items: [{ label: "全部文章", href: "/blog/" }],
-    },
-    {
-      title: "最新文章",
-      items: blogPosts.map((post) => ({ label: post.title, href: post.href })),
-    },
-  ];
+function stripMdxSyntax(content: string) {
+  return content
+    .replace(/^---[\s\S]*?---/m, " ")
+    .replace(/```[\s\S]*?```/g, " ")
+    .replace(/`[^`]*`/g, " ")
+    .replace(/<[^>]*>/g, " ")
+    .replace(/!\[[^\]]*\]\([^)]*\)/g, " ")
+    .replace(/\[[^\]]*\]\([^)]*\)/g, " ")
+    .replace(/[#>*_~\-]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
 }
 
-export function buildProjectSidebar(): SidebarGroup[] {
-  return [
-    {
-      title: "项目",
-      items: [{ label: "全部项目", href: "/projects/" }],
-    },
-    {
-      title: "项目列表",
-      items: projects.map((project) => ({ label: project.title, href: project.href })),
-    },
-  ];
+function readBlogBody(slug: string) {
+  const filePath = path.join(process.cwd(), "src/content/blog", `${slug}.mdx`);
+  try {
+    return fs.readFileSync(filePath, "utf8");
+  } catch {
+    return "";
+  }
 }
+
+export const blogPostPreviews: BlogPreview[] = blogPosts.map((post) => ({
+  slug: post.slug,
+  href: post.href,
+  title: post.title,
+  description: post.description,
+  summary: post.summary,
+  date: post.date,
+  category: post.category,
+  image: post.image,
+  readingTime: post.readingTime,
+  tags: post.tags,
+  searchText: stripMdxSyntax(readBlogBody(post.slug)).toLowerCase(),
+}));
 
 export function getBlogPost(slug: string) {
   return blogPosts.find((post) => post.slug === slug);
-}
-
-export function getProject(slug: string) {
-  return projects.find((project) => project.slug === slug);
 }
